@@ -1,8 +1,8 @@
 import React from "react"
-import axios from "axios";
-import { ToastContainer, toast } from 'react-toastify';
+import axios from "axios"
+import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
-import InfiniteScroll from "react-infinite-scroll-component";
+import InfiniteScroll from "react-infinite-scroll-component"
 
 interface ListProps {}
 interface ListState {
@@ -19,6 +19,7 @@ interface ListState {
     currentPage: number,
     maxPageNr: number,
     reqAttempts: number,
+    runningMassCheck: boolean,
 }
 
 class documentList extends React.Component<ListProps, ListState, boolean> {
@@ -26,15 +27,17 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
 
 
     constructor(props: ListProps) {
-        super(props);
+        super(props)
         this.state = {
             data:
                 [],
             currentPage: 1,
             maxPageNr: 1,
-            reqAttempts: 0
+            reqAttempts: 0,
+            runningMassCheck: false,
         }
         this.getDocumentList = this.getDocumentList.bind(this)
+        this.checkAllDocuments = this.checkAllDocuments.bind(this)
 
     }
     componentDidMount() {
@@ -42,7 +45,7 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
         this._isMounted && this.getDocumentList(true)
     }
     componentWillUnmount() {
-        this._isMounted = false;
+        this._isMounted = false
     }
     render() {
         return (
@@ -58,6 +61,9 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                     draggable
                     pauseOnHover
                 />
+
+                <br/>
+                <button disabled={this.state.runningMassCheck} onClick={ this.checkAllDocuments }> Check All Documents </button>
                 <br/>
                 <InfiniteScroll
                     dataLength={this.state.data.length}
@@ -124,7 +130,7 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                                         <b>Not Valid</b>
                                         }
                                         {(i.signature === true && i.checksum === true && i.schema === true) &&
-                                        <b>Valid {typeof i.signature} {i.signature}</b>
+                                        <b>Valid</b>
                                         }
                                     </td>
 
@@ -140,9 +146,37 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                 <b>You've reached the end</b>
                 }
             </div>
-        );
+        )
     }
-    async checkValidate(type: 'checksum'|'schema'| 'signature', id: string) {
+    sleep(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms))
+    }
+    async checkAllDocuments(){
+        if(this.state.runningMassCheck) return
+        this.setState(state => {
+            const tempState = { ...state }
+            tempState.runningMassCheck = true
+            return tempState
+        })
+        let promises: any = []
+        this.state.data.map(doc => {
+            if(doc.checksum !== false && doc.schema !==false && doc.signature !== false) {
+                promises.push(this.checkValidate('checksum', doc.id))
+                promises.push(this.checkValidate('schema', doc.id))
+                promises.push(this.checkValidate('signature', doc.id))
+                return true
+            }
+        })
+        await Promise.all(promises).then(() => {
+            this.setState(state => {
+                const tempState = { ...state }
+                tempState.runningMassCheck = false
+                return tempState
+            })
+        })
+
+    }
+    async checkValidate(type: 'checksum'|'schema'|'signature', id: string) {
         let result: { data: { valid: boolean } }
         let url: string
         switch (type) {
@@ -167,6 +201,7 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                 })
                 return state
             })
+            return
         } catch(e) {
             toast.error(e.toJSON().message, {
                 position: "top-right",
@@ -174,11 +209,9 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                 closeOnClick: true,
                 pauseOnHover: true,
                 draggable: true,
-            });
+            })
+            return
         }
-
-
-
 
     }
     retryGettingDocuments(shouldClear: boolean|undefined){
@@ -189,7 +222,7 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
         try {
             const { data } = await axios({
                 url: 'http://fe-test.guardtime.com/documents',
-                timeout: 900,
+                timeout: 500,
                 method: 'GET',
                 params: { page: this.state.currentPage }
             })
@@ -208,7 +241,7 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
             })
         }
         catch(e) {
-
+            await this.sleep(this.state.reqAttempts * 300)
             this._isMounted && this.setState(state => {
                 const tempState = { ...state }
                 tempState.reqAttempts += 1
@@ -221,7 +254,7 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                 closeOnClick: true,
                 pauseOnHover: true,
                 draggable: true,
-            });
+            })
             if (this.state.reqAttempts <= 6) return this.retryGettingDocuments(shouldClear)
         }
     }
@@ -229,4 +262,4 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
 }
 
 
-export default documentList;
+export default documentList

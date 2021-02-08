@@ -2,9 +2,16 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Available Scripts
+## Prerequisites
 
-In the project directory, you can run:
+* Have node JS v8 or later installed
+* Have Yarn installed
+
+Once you clone the project, you can run these commands in the project directory:
+
+### `yarn install`
+
+Installs the node modules needed to run th project.
 
 ### `yarn start`
 
@@ -17,7 +24,6 @@ You will also see any lint errors in the console.
 ### `yarn test`
 
 Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
 ### `yarn build`
 
@@ -27,4 +33,13 @@ It correctly bundles React in production mode and optimizes the build for the be
 The build is minified and the filenames include the hashes.\
 Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Description
+
+The page is based on a test task for Guardtime. 
+When Page is loaded, it fetches the first page of documents. From there on it will automatically load the next page of documents
+before the user scrolls to the end.
+The user can click 3 separate checks for each document which will make new REST calls to validate checksum, schema or signature. 
+Timeout for errors are presented in red on the top right and for document fetches, it tries up to 5 additional times with increasing delay between requests.
+
+on the top-left of the page, there is a "check all" button that will run the needed checks for any document that has not yet failed any checks
+
