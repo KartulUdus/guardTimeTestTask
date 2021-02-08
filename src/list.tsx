@@ -76,6 +76,7 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                                 <th className="table-cell">Validate Checksum</th>
                                 <th className="table-cell">Validate Schema</th>
                                 <th className="table-cell">Validate Signature</th>
+                                <th className="table-cell">Validation result</th>
 
                             </tr>
                             {this.state.data.map((i, index) => (
@@ -90,10 +91,10 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                                             <button onClick={ () => {this.checkValidate('checksum', i.id)} }>validate checksum</button>
                                         }
                                         {i.checksum &&
-                                            <b>Validated</b>
+                                            <b>Valid</b>
                                         }
                                         {!i.checksum && typeof i.checksum !== 'undefined' &&
-                                            <b>Not valid</b>
+                                            <b>Invalid</b>
                                         }
                                     </td>
                                     <td className="table-cell">
@@ -116,6 +117,14 @@ class documentList extends React.Component<ListProps, ListState, boolean> {
                                         }
                                         {!i.signature && typeof i.signature !== 'undefined' &&
                                             <b>Invalid</b>
+                                        }
+                                    </td>
+                                    <td className="table-cell">
+                                        {(i.signature === false || i.checksum === false || i.schema === false) &&
+                                        <b>Not Valid</b>
+                                        }
+                                        {(i.signature === true && i.checksum === true && i.schema === true) &&
+                                        <b>Valid {typeof i.signature} {i.signature}</b>
                                         }
                                     </td>
 
